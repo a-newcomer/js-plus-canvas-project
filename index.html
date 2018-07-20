@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+        
+		<title>Lab Three Canvas and JSON</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="initial-scale=1.0">
+        
+        <link rel="stylesheet" href ="lab3.css">
+          <script>  
+            function redraw(randomColor) {
+                var canvas = document.getElementById("canvas");
+                var context = canvas.getContext("2d");
+                
+      //JSON array of shapes          
+                var shapes = [
+                    {"id": "square1", "x": (window.innerWidth-50)*.75, "y": (window.innerHeight - 50)*.5, "w": 50, "h": 50, "bg": "rgb(50,0,175)"},
+                     {"id": "square2", "x": (window.innerWidth-50)*.5, "y": (window.innerHeight-50)*.5, "w": 50, "h": 50, "bg": "rgb(175,0,50)"},
+                    {"id": "square3", "x": (window.innerWidth-50)*.25, "y": (window.innerHeight-50)*.5, "w": 50, "h": 50, "bg": "rgb(0,175,50)"}
+                 ];
+                
+   //This function is supposed to get the shape to change color on mousedown  
+                var changeShape = context.canvas.addEventListener('mousedown', function(event) {
+                    
+                    var target = findShape(event);
+                    var randomColor = genColor();
+                    
+                    target.bg = randomColor; 
+                    context.fillStyle = target.bg;
+                    context.fillRect(target.x, target.y, target.w, target.h);
+                    
+                                       
+                    doIt();
+                    
+                    console.log(randomColor);
+                    console.log( "The target is " + target.id +" and should be colored "+ target.bg);
+                   
+                    
+                }, false);
+            // this little leftover chnages the box's color when the canvas resizes    
+                function doIt(){
+                 shapes[random(shapes.length)].bg = genColor();
+                }
+                
+                doIt();
+                
+   //this function finds whether or not the mousedown(ie click) was on one of the shapes or not, and returns its index in the array if it was            
+                function findShape(event) {
+                    var mouseX = event.clientX - context.canvas.offsetLeft;
+                    var mouseY = event.clientY - context.canvas.offsetTop;
+                    
+                    for(var i = 0; i < shapes.length; i++) {
+                    var s = shapes[i];
+                        if( mouseX >= s.x && mouseX < s.x + s.w && mouseY >= s.y && mouseY < s.y + s.h ) {
+                            
+                            return s;
+                        }//else { make sure it's not returning an error - try returning the bg as a color }
+                    
+                    }
+                }                
+                
+                 shapes.forEach(function(s) {
+                    context.fillStyle = s.bg;
+                    context.fillRect(s.x, s.y, s.w, s.h);
+                });
+                
+                context.strokeRect(0, 0, canvas.width, canvas.height);
+            }
+              
+              //theses two functions generate a random number and then a random color from it
+                          function random(number) {
+                            return Math.floor(Math.random()*number);
+                          }
+                          function genColor() {
+                            var rndCol = 'rgb(' + random(255) + ',' + random(255) + ',' + random(255) + ')';
+                            return rndCol;
+                          }
+               
+     //this keeps the canvas as wide as the browser window after resizing the window       
+            function resize(randomColor) {
+                var canvas = document.getElementById("canvas");
+                randomColor = genColor();
+//                console.log(randomColor);
+                
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;                
+                redraw();
+            }
+              
+            window.addEventListener("resize", resize, false);
+              
+
+        </script> 
+	</head>
+
+	<body onload="resize();">
+        
+        <canvas id="canvas" width="600" height="400">
+        </canvas>
+        <h2 id="status" ></h2>
+        
+        <script type="text/javascript" src="lab3.js"></script>
+	</body>
+</html>
+
+<!-- note to self - add loop to eliminate non target click error ( or change bg color to translucent/pale or gray shade! Change shapes in list to my triangles and change shapemake to make triangles. )
+
+
+Marc's solution:
+
+Hi Ann,
+
+This actually does meet most of the requirements. I don't see a map/filter/reduce/forEach anywhere. One place it would be easy to add is here:
+
+                for(var i = 0; 1 < shapes.length; i++) {
+                    var s = shapes[i];
+                    context.fillStyle = s.bg;
+                    context.fillRect(s.x, s.y, s.w, s.h);
+                }
+
+The code could also be written as:
+
+                shapes.forEach(function(s) {
+                    context.fillStyle = s.bg;
+                    context.fillRect(s.x, s.y, s.w, s.h);
+                });
+
+Note this also fixes a bug in your version, where you have 1 < s.length instead of i < s.length. You also have the same bug in the loop right above that:
+
+for(var i = 0; 1 < shapes.length; i++) {
+
+so you'd want to fix that as well. The reason your colors aren't changing is because this is your event handler:
+
+                    var target = findShape();
+                    //randomColor = genColor();                    
+                    target.bg = randomColor;                    
+                    doIt();
+                    console.log(randomColor);
+                    console.log( "The target is " + target.id +" and should be colored "+ target.bg);
+
+That changes the color property of the target shape (and also calls doIt() , which changes the color property of a random shape), but it doesn't actually redraw the shape. Here's what you want instead:
+
+                    var target = findShape();
+                    //randomColor = genColor();                    
+                    target.bg = randomColor;    
+                    context.fillStyle = target.bg;
+                    context.fillRect(target.x, target.y, target.w, target.h);
+                    console.log(randomColor);
+                    console.log( "The target is " + target.id +" and should be colored "+ target.bg);
+
+Now the shape changes color when you click on it, but it only sets it to green. The problem is your event handler is taking a randomColor argument, but the event handler is getting called by JavaScript in response to an event, and that doesn't pass in a color. Instead of this:
+
+var changeShape = context.canvas.addEventListener('mousedown', function(event, randomColor) {
+
+You need something like this:
+
+                var changeShape = context.canvas.addEventListener('mousedown', function(event) {
+                    var randomColor = genColor();
+
+I think you were going in that direction, but it wasn't working, so you tried something else.
+
+Anyway, when I make the above changes, the code works correctly, except that when you click on the canvas but not on a square, you get an error in the console. You just need to add a check that says if (target) { ... } so that your code only gets executed if findShape returns a value. Here's the complete corrected code:
+
+                var changeShape = context.canvas.addEventListener('mousedown', function(event) {
+                    var target = findShape();
+                    if (target) {
+                      var randomColor = genColor();
+                      //randomColor = genColor();                    
+                      target.bg = randomColor;    
+                      context.fillStyle = target.bg;
+                      context.fillRect(target.x, target.y, target.w, target.h);
+                      console.log(randomColor);
+                      console.log( "The target is " + target.id +" and should be colored "+ target.bg);
+                    }
+                    
+                }, false);
+
+You don't really need the points, but for the sake of completeness, I'm deducting 1 point for not including map/reduce/filter/forEach, and 1 point for the bug. Let me know if you have any other questions.
+
+Thanks,
+
+-Marc -->
